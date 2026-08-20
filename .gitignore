@@ -30,3 +30,6 @@ backend/.env
 # OS Generated
 .DS_Store
 Thumbs.db
+
+
+PROJECT_EXPLAINER.md
