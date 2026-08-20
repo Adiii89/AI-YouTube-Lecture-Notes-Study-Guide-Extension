@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI YouTube Lecture Notes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo-group">
+        <div class="logo-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="url(#grad1)"/>
+            <path d="M2 17L12 22L22 17" stroke="url(#grad1)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 12L12 17L22 12" stroke="url(#grad1)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <defs>
+              <linearGradient id="grad1" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#8B5CF6"/>
+                <stop offset="1" stop-color="#EC4899"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <h1>AI Lecture Notes</h1>
+          <span class="version-tag">v1.2</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div id="status-indicator" class="status-badge status-checking" title="Checking API status...">
+          <span class="status-dot"></span>
+          <span id="status-text">Checking...</span>
+        </div>
+        <button id="btn-settings-toggle" class="icon-btn" title="Settings">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Top Navigation Bar -->
+    <nav class="top-nav">
+      <button class="nav-tab active" data-nav="notes">✨ Notes</button>
+      <button class="nav-tab" data-nav="chat">💬 Ask Video</button>
+      <button class="nav-tab" data-nav="library">📚 Library</button>
+    </nav>
+
+    <!-- Settings Panel (Collapsible) -->
+    <section id="settings-panel" class="settings-panel hidden">
+      <div class="settings-header">
+        <h3>Backend & AI Configuration</h3>
+      </div>
+      <div class="form-group">
+        <label for="api-url-input">API Base URL</label>
+        <input type="text" id="api-url-input" value="http://127.0.0.1:8000/api/v1" placeholder="http://127.0.0.1:8000/api/v1">
+      </div>
+      <div class="form-group">
+        <label for="provider-select">AI Provider</label>
+        <select id="provider-select" class="text-input">
+          <option value="openai">OpenAI (GPT-4o-mini / GPT-4o)</option>
+          <option value="gemini">Google Gemini (Gemini 2.5 Flash)</option>
+          <option value="auto">Auto (from server .env)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="model-input">Custom Model Override (Optional)</label>
+        <input type="text" id="model-input" value="" placeholder="e.g. gpt-4o-mini or gemini-2.5-flash">
+      </div>
+      <div class="settings-actions">
+        <button id="btn-save-settings" class="btn btn-secondary btn-sm">Save Settings</button>
+        <button id="btn-test-connection" class="btn btn-ghost btn-sm">Test API</button>
+      </div>
+    </section>
+
+    <!-- Video Context Banner -->
+    <section class="video-banner" id="video-banner">
+      <div class="video-info">
+        <div class="yt-icon-badge">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="#FF0000">
+            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+          </svg>
+        </div>
+        <div class="video-details">
+          <p id="video-title" class="video-title">Detecting active YouTube video...</p>
+          <span id="video-meta" class="video-meta">Searching tab...</span>
+        </div>
+      </div>
+      <div id="custom-url-container" class="custom-url-container hidden">
+        <input type="text" id="manual-url-input" placeholder="Paste YouTube link (e.g. https://youtu.be/...)" class="text-input">
+      </div>
+    </section>
+
+    <!-- ==========================================
+         PAGE 1: NOTES GENERATOR VIEW
+         ========================================== -->
+    <div id="page-notes" class="page-container active">
+      <!-- Form View -->
+      <div id="form-view" class="view-section">
+        <div class="section-label">Note Format</div>
+        <div class="format-grid">
+          <label class="format-card selected" data-format="comprehensive">
+            <input type="radio" name="note-format" value="comprehensive" checked>
+            <div class="card-icon">📚</div>
+            <div class="card-title">Study Guide</div>
+            <div class="card-desc">Deep breakdown & timestamps</div>
+          </label>
+
+          <label class="format-card" data-format="cornell">
+            <input type="radio" name="note-format" value="cornell">
+            <div class="card-icon">📝</div>
+            <div class="card-title">Cornell Notes</div>
+            <div class="card-desc">Cues, notes & summary</div>
+          </label>
+
+          <label class="format-card" data-format="summary">
+            <input type="radio" name="note-format" value="summary">
+            <div class="card-icon">⚡</div>
+            <div class="card-title">Summary</div>
+            <div class="card-desc">TL;DR & key takeaways</div>
+          </label>
+
+          <label class="format-card" data-format="flashcards">
+            <input type="radio" name="note-format" value="flashcards">
+            <div class="card-icon">🗂️</div>
+            <div class="card-title">Flashcards</div>
+            <div class="card-desc">Active recall Q&A</div>
+          </label>
+
+          <label class="format-card" data-format="action_items">
+            <input type="radio" name="note-format" value="action_items">
+            <div class="card-icon">🎯</div>
+            <div class="card-title">Action Items</div>
+            <div class="card-desc">Practical steps & tasks</div>
+          </label>
+        </div>
+
+        <!-- Custom Prompt Accordion -->
+        <details class="custom-prompt-accordion">
+          <summary class="accordion-summary">
+            <span>✨ Custom Instructions (Optional)</span>
+            <span class="chevron">▼</span>
+          </summary>
+          <div class="accordion-body">
+            <textarea id="custom-prompt-input" rows="2" placeholder="e.g. Focus heavily on code implementation; summarize in Spanish; explain for beginners..."></textarea>
+          </div>
+        </details>
+
+        <!-- Generate Button -->
+        <button id="btn-generate" class="btn btn-primary btn-generate">
+          <span class="btn-glow"></span>
+          <svg class="sparkle-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor"/>
+          </svg>
+          <span class="btn-text">Generate AI Notes</span>
+        </button>
+      </div>
+
+      <!-- Loading State -->
+      <div id="loading-view" class="view-section hidden">
+        <div class="loading-card">
+          <div class="orbital-spinner">
+            <div class="ring ring-1"></div>
+            <div class="ring ring-2"></div>
+            <div class="core-dot"></div>
+          </div>
+          <h3 id="loading-step-title">Extracting Transcripts...</h3>
+          <p id="loading-step-desc">Fetching YouTube subtitles and timestamp mappings</p>
+          <div class="progress-track">
+            <div id="progress-bar" class="progress-bar"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notes Result View -->
+      <div id="result-view" class="view-section hidden">
+        <div class="result-header">
+          <div class="result-meta-tags">
+            <span id="badge-format" class="pill-badge pill-purple">Study Guide</span>
+            <span id="badge-words" class="pill-badge pill-slate">450 words</span>
+            <span id="badge-model" class="pill-badge pill-emerald">GPT-4o-mini</span>
+          </div>
+          <button id="btn-new-note" class="btn btn-ghost btn-xs" title="Generate New Format">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            New
+          </button>
+        </div>
+
+        <div class="result-tabs">
+          <button class="tab-btn active" data-tab="markdown">📄 Markdown</button>
+          <button class="tab-btn" data-tab="flashcards" id="tab-flashcards-btn">🗂️ Flashcards (<span id="fc-count">0</span>)</button>
+          <button class="tab-btn" data-tab="cornell" id="tab-cornell-btn">📝 Cornell</button>
+        </div>
+
+        <div id="tab-content-markdown" class="tab-pane active">
+          <div id="markdown-viewer" class="markdown-body"></div>
+        </div>
+
+        <div id="tab-content-flashcards" class="tab-pane">
+          <div id="flashcards-container" class="flashcards-list"></div>
+        </div>
+
+        <div id="tab-content-cornell" class="tab-pane">
+          <div id="cornell-container" class="cornell-table-wrap"></div>
+        </div>
+
+        <div class="action-toolbar">
+          <button id="btn-copy-md" class="btn btn-secondary btn-sm" title="Copy to Clipboard">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            Copy
+          </button>
+
+          <button id="btn-download-md" class="btn btn-secondary btn-sm" title="Download .md file">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Export .md
+          </button>
+
+          <button id="btn-print" class="btn btn-ghost btn-sm" title="Print or save as PDF">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 6 2 18 2 18 9"></polyline>
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+              <rect x="6" y="14" width="12" height="8"></rect>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         PAGE 2: VIDEO CHAT VIEW
+         ========================================== -->
+    <div id="page-chat" class="page-container">
+      <div class="chat-wrapper">
+        <!-- Quick Prompts -->
+        <div class="quick-prompts-bar">
+          <button class="quick-chip" data-query="Give me a 3-bullet summary of the core thesis.">💡 3-Bullet Summary</button>
+          <button class="quick-chip" data-query="Explain the most important formula or technical concept in this lecture.">🧠 Key Concept</button>
+          <button class="quick-chip" data-query="Give me 3 practice quiz questions to test my understanding.">🎯 Practice Quiz</button>
+        </div>
+
+        <!-- Chat Stream -->
+        <div id="chat-messages" class="chat-messages-container">
+          <div class="chat-msg chat-assistant">
+            <div class="msg-avatar">🤖</div>
+            <div class="msg-bubble">
+              <p>Hi! I've loaded the transcript for this video. Ask me anything about the lecture, concepts, formulas, or timestamps!</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Input Bar -->
+        <div class="chat-input-bar">
+          <input type="text" id="chat-user-input" placeholder="Ask a question about this video..." autocomplete="off">
+          <button id="btn-send-chat" class="btn-send" title="Send message">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         PAGE 3: SAVED LIBRARY VIEW
+         ========================================== -->
+    <div id="page-library" class="page-container">
+      <div class="library-wrapper">
+        <div class="library-search-bar">
+          <input type="text" id="library-search-input" placeholder="Search saved lecture notes..." class="text-input">
+        </div>
+        <div id="library-list" class="library-list">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Banner -->
+    <div id="error-view" class="error-banner hidden">
+      <div class="error-icon">⚠️</div>
+      <div class="error-text">
+        <strong id="error-title">Error Encountered</strong>
+        <p id="error-message">Failed to connect to backend service.</p>
+      </div>
+      <button id="btn-dismiss-error" class="icon-btn btn-xs">✕</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

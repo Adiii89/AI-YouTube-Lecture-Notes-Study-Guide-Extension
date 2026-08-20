@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "AI YouTube Lecture Notes & Study Guide",
+  "version": "1.0.0",
+  "description": "Generate AI-powered structured lecture notes, Cornell notes, summaries, and flashcards directly from YouTube videos.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "AI YouTube Lecture Notes",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background/service_worker.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.youtube.com/*"
+      ],
+      "js": [
+        "content/content.js"
+      ],
+      "css": [
+        "content/content.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "*://*.youtube.com/*",
+    "http://localhost:8000/*",
+    "http://127.0.0.1:8000/*"
+  ]
+}
